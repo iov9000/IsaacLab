@@ -39,11 +39,17 @@ class RslRlPpoAlgorithmCfg:
     value_loss_coef: float = MISSING
     """The coefficient for the value loss."""
 
+    cf_loss_coef: float = MISSING
+    """The coefficient for the value loss."""
+
     use_clipped_value_loss: bool = MISSING
     """Whether to use clipped value loss."""
 
     clip_param: float = MISSING
     """The clipping parameter for the policy."""
+
+    clip_param_cf: float = MISSING
+    """The clipping parameter for the cf policy."""
 
     entropy_coef: float = MISSING
     """The coefficient for the entropy loss."""
