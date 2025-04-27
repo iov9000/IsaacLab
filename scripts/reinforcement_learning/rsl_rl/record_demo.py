@@ -223,11 +223,11 @@ def main():
 
     # save demo data
     demo_data = {
-        "obs": obs_,
-        "acs": acs_,
-        "rews": rews_,
-        "dones": dones,
-        "next_obs": next_obs_,
+        "obs": torch.stack(obs_),
+        "acs": torch.stack(acs_),
+        "rew": torch.stack(rews_),
+        "dones": torch.stack(dones),
+        "next_obs": torch.stack(next_obs_),
     }
 
     demo_data_path = os.path.join(
