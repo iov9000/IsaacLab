@@ -15,7 +15,12 @@ from isaaclab.assets import Articulation
 from isaaclab.managers import CommandTerm
 from isaaclab.markers import VisualizationMarkers
 from isaaclab.terrains import TerrainImporter
-from isaaclab.utils.math import quat_from_euler_xyz, quat_rotate_inverse, wrap_to_pi, yaw_quat
+from isaaclab.utils.math import (
+    quat_from_euler_xyz,
+    quat_rotate_inverse,
+    wrap_to_pi,
+    yaw_quat,
+)
 
 if TYPE_CHECKING:
     from isaaclab.envs import ManagerBasedEnv
@@ -73,7 +78,9 @@ class UniformPose2dCommand(CommandTerm):
     @property
     def command(self) -> torch.Tensor:
         """The desired 2D-pose in base frame. Shape is (num_envs, 4)."""
-        return torch.cat([self.pos_command_b, self.heading_command_b.unsqueeze(1)], dim=1)
+        return torch.cat(
+            [self.pos_command_b, self.heading_command_b.unsqueeze(1)], dim=1
+        )
 
     """
     Implementation specific functions.
@@ -81,8 +88,12 @@ class UniformPose2dCommand(CommandTerm):
 
     def _update_metrics(self):
         # logs data
-        self.metrics["error_pos_2d"] = torch.norm(self.pos_command_w[:, :2] - self.robot.data.root_pos_w[:, :2], dim=1)
-        self.metrics["error_heading"] = torch.abs(wrap_to_pi(self.heading_command_w - self.robot.data.heading_w))
+        self.metrics["error_pos_2d"] = torch.norm(
+            self.pos_command_w[:, :2] - self.robot.data.root_pos_w[:, :2], dim=1
+        )
+        self.metrics["error_heading"] = torch.abs(
+            wrap_to_pi(self.heading_command_w - self.robot.data.heading_w)
+        )
 
     def _resample_command(self, env_ids: Sequence[int]):
         # obtain env origins for the environments
@@ -95,14 +106,20 @@ class UniformPose2dCommand(CommandTerm):
 
         if self.cfg.simple_heading:
             # set heading command to point towards target
-            target_vec = self.pos_command_w[env_ids] - self.robot.data.root_pos_w[env_ids]
+            target_vec = (
+                self.pos_command_w[env_ids] - self.robot.data.root_pos_w[env_ids]
+            )
             target_direction = torch.atan2(target_vec[:, 1], target_vec[:, 0])
             flipped_target_direction = wrap_to_pi(target_direction + torch.pi)
 
             # compute errors to find the closest direction to the current heading
             # this is done to avoid the discontinuity at the -pi/pi boundary
-            curr_to_target = wrap_to_pi(target_direction - self.robot.data.heading_w[env_ids]).abs()
-            curr_to_flipped_target = wrap_to_pi(flipped_target_direction - self.robot.data.heading_w[env_ids]).abs()
+            curr_to_target = wrap_to_pi(
+                target_direction - self.robot.data.heading_w[env_ids]
+            ).abs()
+            curr_to_flipped_target = wrap_to_pi(
+                flipped_target_direction - self.robot.data.heading_w[env_ids]
+            ).abs()
 
             # set the heading command to the closest direction
             self.heading_command_w[env_ids] = torch.where(
@@ -117,14 +134,20 @@ class UniformPose2dCommand(CommandTerm):
     def _update_command(self):
         """Re-target the position command to the current root state."""
         target_vec = self.pos_command_w - self.robot.data.root_pos_w[:, :3]
-        self.pos_command_b[:] = quat_rotate_inverse(yaw_quat(self.robot.data.root_quat_w), target_vec)
-        self.heading_command_b[:] = wrap_to_pi(self.heading_command_w - self.robot.data.heading_w)
+        self.pos_command_b[:] = quat_rotate_inverse(
+            yaw_quat(self.robot.data.root_quat_w), target_vec
+        )
+        self.heading_command_b[:] = wrap_to_pi(
+            self.heading_command_w - self.robot.data.heading_w
+        )
 
     def _set_debug_vis_impl(self, debug_vis: bool):
         # create markers if necessary for the first tome
         if debug_vis:
             if not hasattr(self, "goal_pose_visualizer"):
-                self.goal_pose_visualizer = VisualizationMarkers(self.cfg.goal_pose_visualizer_cfg)
+                self.goal_pose_visualizer = VisualizationMarkers(
+                    self.cfg.goal_pose_visualizer_cfg
+                )
             # set their visibility to true
             self.goal_pose_visualizer.set_visibility(True)
         else:
@@ -173,23 +196,33 @@ class TerrainBasedPose2dCommand(UniformPose2dCommand):
 
     def _resample_command(self, env_ids: Sequence[int]):
         # sample new position targets from the terrain
-        ids = torch.randint(0, self.valid_targets.shape[2], size=(len(env_ids),), device=self.device)
+        ids = torch.randint(
+            0, self.valid_targets.shape[2], size=(len(env_ids),), device=self.device
+        )
         self.pos_command_w[env_ids] = self.valid_targets[
-            self.terrain.terrain_levels[env_ids], self.terrain.terrain_types[env_ids], ids
+            self.terrain.terrain_levels[env_ids],
+            self.terrain.terrain_types[env_ids],
+            ids,
         ]
         # offset the position command by the current root height
         self.pos_command_w[env_ids, 2] += self.robot.data.default_root_state[env_ids, 2]
 
         if self.cfg.simple_heading:
             # set heading command to point towards target
-            target_vec = self.pos_command_w[env_ids] - self.robot.data.root_pos_w[env_ids]
+            target_vec = (
+                self.pos_command_w[env_ids] - self.robot.data.root_pos_w[env_ids]
+            )
             target_direction = torch.atan2(target_vec[:, 1], target_vec[:, 0])
             flipped_target_direction = wrap_to_pi(target_direction + torch.pi)
 
             # compute errors to find the closest direction to the current heading
             # this is done to avoid the discontinuity at the -pi/pi boundary
-            curr_to_target = wrap_to_pi(target_direction - self.robot.data.heading_w[env_ids]).abs()
-            curr_to_flipped_target = wrap_to_pi(flipped_target_direction - self.robot.data.heading_w[env_ids]).abs()
+            curr_to_target = wrap_to_pi(
+                target_direction - self.robot.data.heading_w[env_ids]
+            ).abs()
+            curr_to_flipped_target = wrap_to_pi(
+                flipped_target_direction - self.robot.data.heading_w[env_ids]
+            ).abs()
 
             # set the heading command to the closest direction
             self.heading_command_w[env_ids] = torch.where(

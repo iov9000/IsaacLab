@@ -225,8 +225,8 @@ def main():
     demo_data = {
         "obs": torch.stack(obs_),
         "acs": torch.stack(acs_),
-        "rew": torch.stack(rews_),
-        "dones": torch.stack(dones),
+        "rew": torch.stack(rews_).unsqueeze(-1),
+        "dones": torch.stack(dones).unsqueeze(-1),
         "next_obs": torch.stack(next_obs_),
     }
 
