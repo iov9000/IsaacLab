@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2025, The Isaac Lab Project Developers.
+# Copyright (c) 2022-2025, The Isaac Lab Project Developers (https://github.com/isaac-sim/IsaacLab/blob/main/CONTRIBUTORS.md).
 # All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
@@ -16,8 +16,8 @@ from isaaclab.managers import CommandTerm
 from isaaclab.markers import VisualizationMarkers
 from isaaclab.terrains import TerrainImporter
 from isaaclab.utils.math import (
+    quat_apply_inverse,
     quat_from_euler_xyz,
-    quat_rotate_inverse,
     wrap_to_pi,
     yaw_quat,
 )
@@ -134,7 +134,7 @@ class UniformPose2dCommand(CommandTerm):
     def _update_command(self):
         """Re-target the position command to the current root state."""
         target_vec = self.pos_command_w - self.robot.data.root_pos_w[:, :3]
-        self.pos_command_b[:] = quat_rotate_inverse(
+        self.pos_command_b[:] = quat_apply_inverse(
             yaw_quat(self.robot.data.root_quat_w), target_vec
         )
         self.heading_command_b[:] = wrap_to_pi(
@@ -142,7 +142,7 @@ class UniformPose2dCommand(CommandTerm):
         )
 
     def _set_debug_vis_impl(self, debug_vis: bool):
-        # create markers if necessary for the first tome
+        # create markers if necessary for the first time
         if debug_vis:
             if not hasattr(self, "goal_pose_visualizer"):
                 self.goal_pose_visualizer = VisualizationMarkers(
